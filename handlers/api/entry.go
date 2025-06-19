@@ -44,7 +44,7 @@ func Entry(c *fiber.Ctx) error {
 		Value:    sessionID,
 		Expires:  time.Now().Add(24 * time.Hour),
 		HTTPOnly: true,
-		Secure:   false,
+		Secure:   true,
 		SameSite: "Lax",
 		Path:     "/",
 	})
@@ -54,7 +54,7 @@ func Entry(c *fiber.Ctx) error {
 		Value:    user.Status,
 		Expires:  time.Now().Add(24 * time.Hour),
 		HTTPOnly: false,
-		Secure:   false,
+		Secure:   true,
 		SameSite: "Lax",
 		Path:     "/",
 	})
