@@ -45,7 +45,7 @@ func Entry(c *fiber.Ctx) error {
 		Expires:  time.Now().Add(24 * time.Hour),
 		HTTPOnly: true,
 		Secure:   true,
-		SameSite: "Lax",
+		SameSite: "None",
 		Path:     "/",
 	})
 
@@ -55,7 +55,7 @@ func Entry(c *fiber.Ctx) error {
 		Expires:  time.Now().Add(24 * time.Hour),
 		HTTPOnly: false,
 		Secure:   true,
-		SameSite: "Lax",
+		SameSite: "None",
 		Path:     "/",
 	})
 

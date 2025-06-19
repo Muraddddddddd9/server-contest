@@ -32,7 +32,7 @@ func Exit(c *fiber.Ctx) error {
 		MaxAge:   -1,
 		HTTPOnly: true,
 		Secure:   true,
-		SameSite: "Lax",
+		SameSite: "None",
 		Path:     "/",
 	})
 
@@ -42,7 +42,7 @@ func Exit(c *fiber.Ctx) error {
 		MaxAge:   -1,
 		HTTPOnly: false,
 		Secure:   true,
-		SameSite: "Lax",
+		SameSite: "None",
 		Path:     "/",
 	})
 
