@@ -2,6 +2,7 @@ package api
 
 import (
 	"contest/constants"
+	"contest/handlers/ws"
 	"contest/utils"
 	"strings"
 
@@ -9,7 +10,7 @@ import (
 )
 
 type ActionLesson struct {
-	Action string `json:"action"`
+	Action int `json:"action"`
 }
 
 func StageLessonChange(c *fiber.Ctx) error {
@@ -23,17 +24,28 @@ func StageLessonChange(c *fiber.Ctx) error {
 	}
 
 	if session == "" {
+		utils.CleatCookieForExit(c)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": constants.ErrUserNotFound,
+			"redirect": "/",
 		})
 	}
 
 	userName := strings.Split(session, ":")
-
-	user := utils.GetUserData(userName[0])
+	user, _ := utils.GetUserData(userName[0])
 	if user == nil {
+		utils.CleatCookieForExit(c)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": constants.ErrUserNotFound,
+			"redirect": "/",
+		})
+	}
+
+	if !user.StatusEntry {
+		utils.CleatCookieForExit(c)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message":  constants.ErrUserNotEntry,
+			"redirect": "/",
 		})
 	}
 
@@ -43,29 +55,16 @@ func StageLessonChange(c *fiber.Ctx) error {
 		})
 	}
 
-	switch strings.ToLower(action.Action) {
-	case "next":
-		if constants.NowStageLesson == 7 {
-			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"message": constants.ErrStageLessonEnd,
-			})
-		}
-		constants.NowStageLesson++
-	case "prev":
-		if constants.NowStageLesson == 1 {
-			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"message": constants.ErrStageLessonEnd,
-			})
-		}
-		constants.NowStageLesson--
+	constants.NowStageLesson = action.Action
+
+	_, _, flagOnly := ws.TimeOnly.GetDataTime()
+	if *flagOnly {
+		*flagOnly = false
 	}
 
-	if constants.FlagTimeOnlyTest {
-		constants.FlagTimeOnlyTest = false
-	}
-	
-	if constants.FlagTimeTeamTest {
-		constants.FlagTimeTeamTest = false
+	_, _, flagTeam := ws.TimeTeam.GetDataTime()
+	if *flagTeam {
+		*flagTeam = false
 	}
 
 	return c.Status(fiber.StatusAccepted).JSON(fiber.Map{

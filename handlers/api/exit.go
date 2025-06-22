@@ -11,16 +11,20 @@ import (
 func Exit(c *fiber.Ctx) error {
 	session := c.Cookies(constants.SessionKey)
 	if session == "" {
+		utils.CleatCookieForExit(c)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": constants.ErrUserExit,
+			"redirect": "/",
 		})
 	}
 
 	userName := strings.Split(session, ":")
-	user := utils.GetUserData(userName[0])
+	user, _ := utils.GetUserData(userName[0])
 	if user == nil {
+		utils.CleatCookieForExit(c)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": constants.ErrUserNotFound,
+			"redirect": "/",
 		})
 	}
 
@@ -31,8 +35,8 @@ func Exit(c *fiber.Ctx) error {
 		Value:    "",
 		MaxAge:   -1,
 		HTTPOnly: true,
-		Secure:   true,
-		SameSite: "None",
+		Secure:   false,
+		SameSite: "Lax",
 		Path:     "/",
 	})
 
@@ -41,8 +45,8 @@ func Exit(c *fiber.Ctx) error {
 		Value:    "",
 		MaxAge:   -1,
 		HTTPOnly: false,
-		Secure:   true,
-		SameSite: "None",
+		Secure:   false,
+		SameSite: "Lax",
 		Path:     "/",
 	})
 

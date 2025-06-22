@@ -25,19 +25,14 @@ func main() {
 	}))
 
 	app.Post("/api/entry", func(c *fiber.Ctx) error {
-		// "username": "Teacher",
-		// "password": "BIM_LOCAL123"
 		return api.Entry(c)
 	})
 
 	app.Post("/api/exit", func(c *fiber.Ctx) error {
-		// Cookie,
 		return api.Exit(c)
 	})
 
 	app.Post("/api/change_lesson", func(c *fiber.Ctx) error {
-		// "action": "next | prev"
-		// Cookie
 		return api.StageLessonChange(c)
 	})
 
@@ -50,31 +45,10 @@ func main() {
 	})
 
 	app.Post("/api/check_answer", func(c *fiber.Ctx) error {
-		// "answer": [
-		//     {
-		//         "id": "Questions_1",
-		//         "answer": "Норм"
-		//     },
-		//     {
-		//         "id": "Questions_2",
-		//         "answer": "Как как"
-		//     }
-		// ]
-		return api.CheckAnswer(c)
+		return api.CheckAnswerOnly(c)
 	})
 
 	app.Post("/api/check_answer/team", func(c *fiber.Ctx) error {
-		// "answer": [
-		//     {
-		//         "id": "Questions_Team_1",
-		//         "answer": "ОГООГО"
-		//     },
-		//     {
-		//         "id": "Questions_Team_2",
-		//         "answer": "Как"
-		//     }
-		// ]
-		// "team": 1
 		return api.CheckAnswerTeam(c)
 	})
 
@@ -82,24 +56,40 @@ func main() {
 		return api.ChangeTime(c)
 	})
 
+	app.Post("/api/redact_time", func(c *fiber.Ctx) error {
+		return api.RedactTime(c)
+	})
+
+	app.Post("/api/redact_presentation", func(c *fiber.Ctx) error {
+		return api.RedactPresentation(c)
+	})
+
+	app.Get("/api/get_presentation", func(c *fiber.Ctx) error {
+		return api.GetPresentation(c)
+	})
+
+	app.Post("/api/clear", func(c *fiber.Ctx) error {
+		return api.ClearData(c)
+	})
+
 	app.Get("/ws/stage_lesson", websocket.New(func(c *websocket.Conn) {
 		ws.GetStageLesson(c)
-	}))
-
-	app.Get("/ws/get_time", websocket.New(func(c *websocket.Conn) {
-		ws.GetTimeLesson(c)
 	}))
 
 	app.Get("/ws/get_users", websocket.New(func(c *websocket.Conn) {
 		ws.GetUsers(c)
 	}))
 
-	app.Get("/ws/get_time_only", websocket.New(func(c *websocket.Conn) {
-		ws.GetTimeOnly(c)
+	app.Get("/ws/time_lesson", websocket.New(func(c *websocket.Conn) {
+		ws.GetLessonTime(c)
 	}))
 
-	app.Get("/ws/get_time_team", websocket.New(func(c *websocket.Conn) {
-		ws.GetTimeTeam(c)
+	app.Get("/ws/time_only", websocket.New(func(c *websocket.Conn) {
+		ws.GetOnlyTime(c)
+	}))
+
+	app.Get("/ws/time_team", websocket.New(func(c *websocket.Conn) {
+		ws.GetTeamTime(c)
 	}))
 
 	app.Listen(":8080")

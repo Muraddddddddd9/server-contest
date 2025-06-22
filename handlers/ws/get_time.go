@@ -5,34 +5,58 @@ import (
 	"contest/utils"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/gofiber/contrib/websocket"
 )
 
-var (
-	minute = 45
-	second = 0
-)
+type TimeData struct {
+	Minute int
+	Second int
+	Flag   bool
+}
 
-func GetTimeLesson(c *websocket.Conn) {
+func CreateNewTime(minute, second int, flag bool) *TimeData {
+	return &TimeData{Minute: minute, Second: second, Flag: flag}
+}
+
+func (t *TimeData) GetDataTime() (*int, *int, *bool) {
+	return &t.Minute, &t.Second, &t.Flag
+}
+
+func (t *TimeData) CountdownTime(user *constants.UserStruct) interface{} {
+	if t.Flag && user.Status == constants.TeacherStatus {
+		if t.Minute > 0 || t.Second > 0 {
+			if t.Second == 0 {
+				t.Minute--
+				t.Second = 59
+			} else {
+				t.Second--
+			}
+		}
+	}
+
+	data := map[string]interface{}{
+		"time": fmt.Sprintf("%02d:%02d", t.Minute, t.Second),
+		"flag": t.Flag,
+	}
+
+	return data
+}
+
+func GetTime(c *websocket.Conn, timeData *TimeData) {
 	defer func() {
 		c.Close()
 		log.Println(constants.SuccCloseWS)
 	}()
 
 	session := c.Cookies(constants.SessionKey)
-	if session == "" {
-		log.Println(constants.ErrUserNotFound)
-		return
-	}
-
-	userName := strings.Split(session, ":")
-
-	user := utils.GetUserData(userName[0])
-	if user == nil {
-		log.Println(constants.ErrUserNotFound)
+	user, errFoundUser := utils.GetUserDataSession(session)
+	if errFoundUser != "" && user == nil {
+		err := c.WriteMessage(1, []byte(errFoundUser))
+		if err != nil {
+			log.Printf("%v\n", errFoundUser)
+		}
 		return
 	}
 
@@ -40,26 +64,27 @@ func GetTimeLesson(c *websocket.Conn) {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		if constants.FlagTime {
-			if user.Status == constants.TeacherStatus {
-				if minute > 0 || second > 0 {
-					if second == 0 {
-						minute--
-						second = 59
-					} else {
-						second--
-					}
-				}
-			}
-		}
+		data := timeData.CountdownTime(user)
 
-		if err := c.WriteJSON(map[string]any{"time": fmt.Sprintf("%02d:%02d", minute, second), "flag": constants.FlagTime}); err != nil {
+		if err := c.WriteJSON(data); err != nil {
 			log.Println(constants.ErrInternalServer, err)
 			return
 		}
 	}
 }
 
-func GetTimeLessonFunc() (*int, *int) {
-	return &minute, &second
+var TimeLesson = CreateNewTime(45, 0, false)
+var TimeOnly = CreateNewTime(2, 0, false)
+var TimeTeam = CreateNewTime(1, 0, false)
+
+func GetLessonTime(c *websocket.Conn) {
+	GetTime(c, TimeLesson)
+}
+
+func GetOnlyTime(c *websocket.Conn) {
+	GetTime(c, TimeOnly)
+}
+
+func GetTeamTime(c *websocket.Conn) {
+	GetTime(c, TimeTeam)
 }

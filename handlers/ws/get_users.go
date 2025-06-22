@@ -2,11 +2,10 @@ package ws
 
 import (
 	"contest/constants"
+	"contest/utils"
 	"encoding/json"
 	"log"
 	"sort"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gofiber/contrib/websocket"
@@ -15,7 +14,7 @@ import (
 type SendUserDataStruct struct {
 	Username   string `json:"username"`
 	BimCoin    uint64 `json:"bim_coin"`
-	Team       uint8  `json:"team"`
+	Team       int    `json:"team"`
 	TeamLeader bool   `json:"team_leader"`
 }
 
@@ -26,35 +25,43 @@ func GetUsers(c *websocket.Conn) {
 	}()
 
 	session := c.Cookies(constants.SessionKey)
-	if session == "" {
-		log.Println(constants.ErrUserNotFound)
+	user, errFoundUser := utils.GetUserDataSession(session)
+	if errFoundUser != "" && user == nil {
+		log.Println(errFoundUser)
 		return
 	}
 
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
 	var lastSendUser []SendUserDataStruct
 
 	for range ticker.C {
+		usersIDs := constants.UserToID
 		users := constants.Users
 		var sendUser []SendUserDataStruct
 
-		for k := range users {
-			if k != "Teacher" {
+		for k := range usersIDs {
+			id := usersIDs[k]
+			user := users[id]
+			if user.Status != constants.TeacherStatus {
 				sendUser = append(sendUser, SendUserDataStruct{
-					Username:   k,
-					BimCoin:    users[k].BimCoin,
-					Team:       users[k].Team,
-					TeamLeader: users[k].TeamLeader,
+					Username:   user.Name,
+					BimCoin:    user.BimCoin,
+					Team:       user.Team,
+					TeamLeader: user.TeamLeader,
 				})
 			}
 		}
 
 		sort.Slice(sendUser, func(i, j int) bool {
-			numI := extractNumber(sendUser[i].Username)
-			numJ := extractNumber(sendUser[j].Username)
+			numI := sendUser[i].Username
+			numJ := sendUser[j].Username
 			return numI < numJ
+		})
+
+		sort.Slice(sendUser, func(i, j int) bool {
+			return sendUser[i].BimCoin > sendUser[j].BimCoin
 		})
 
 		if usersEqual(lastSendUser, sendUser) {
@@ -86,13 +93,4 @@ func usersEqual(a, b []SendUserDataStruct) bool {
 		}
 	}
 	return true
-}
-
-func extractNumber(username string) int {
-	parts := strings.Split(username, "_")
-	if len(parts) != 2 {
-		return 0
-	}
-	num, _ := strconv.Atoi(parts[1])
-	return num
 }

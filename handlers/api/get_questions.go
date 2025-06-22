@@ -47,10 +47,12 @@ func GetQuestionsTeam(c *fiber.Ctx) error {
 	}
 
 	userName := strings.Split(session, ":")
-	user := utils.GetUserData(userName[0])
+	user, _ := utils.GetUserData(userName[0])
 	if user == nil {
+		utils.CleatCookieForExit(c)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": constants.ErrUserNotFound,
+			"redirect": "/",
 		})
 	}
 
@@ -58,7 +60,7 @@ func GetQuestionsTeam(c *fiber.Ctx) error {
 		var leader string
 		for k := range constants.Users {
 			if constants.Users[k].Team == user.Team && constants.Users[k].TeamLeader {
-				leader = k
+				leader = constants.Users[k].Name
 			}
 		}
 

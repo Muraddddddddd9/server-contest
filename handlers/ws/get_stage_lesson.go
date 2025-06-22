@@ -16,7 +16,10 @@ func GetStageLesson(c *websocket.Conn) {
 
 	session := c.Cookies(constants.SessionKey)
 	if session == "" {
-		log.Println(constants.ErrUserNotFound)
+		err := c.WriteMessage(1, []byte(constants.ErrUserNotFound))
+		if err != nil {
+			log.Printf("%v:%v\n", constants.ErrUserNotFound, err)
+		}
 		return
 	}
 

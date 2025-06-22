@@ -1,10 +1,12 @@
 package constants
 
 var (
-	NowStageLesson   = 1
-	FlagTime         = false
-	FlagTimeOnlyTest = false
-	FlagTimeTeamTest = false
+	NowStageLesson = 1
+	IdPresentation = ""
+	UserOnlyAnswer = map[string]bool{}
+	UserTeamAnswer = map[int]bool{}
+	OneTeamLeader  = false
+	TwoTeamLeader  = false
 )
 
 type QuestionStruct struct {
